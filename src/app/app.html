@@ -1,30 +1,91 @@
-<div style="font-family: sans-serif; padding: 20px; background-color: #1e1e1e; color: white; min-height: 100vh;">
-  
-  <h1 style="color: #4CAF50;">📊 Motor de Rendimento Passivo</h1>
-  <p>Status: Conectado ao servidor Python (FastAPI)</p>
+<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 30px; background-color: #0e1117; color: #fafafa; min-height: 100vh;">
 
-  <div *ngIf="carregando">
-    <p>A sincronizar com a B3... Aguarde.</p>
+  <h1 style="font-weight: 600; margin-bottom: 5px;">📊 Painel de Controle - Máquina de Renda</h1>
+  <p style="color: #9e9e9e; font-size: 1.1rem; margin-top: 0;">Monitoramento em tempo real dos seus Fundos Imobiliários e Fiagros.</p>
+  <hr style="border-color: #262730; margin: 30px 0;">
+
+  <div *ngIf="carregandoTabela" style="color: #ff4b4b; font-weight: bold; margin-bottom: 20px; font-size: 1.2rem;">
+    ⏳ Sincronizando com a B3... Aguarde.
   </div>
 
-  <table *ngIf="!carregando" style="width: 100%; max-width: 600px; text-align: left; border-collapse: collapse; margin-top: 20px;">
-    <thead>
-      <tr style="border-bottom: 2px solid #4CAF50;">
-        <th style="padding: 10px;">Fundo Imobiliário</th>
-        <th style="padding: 10px;">Preço Atual</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let ativo of ativos" style="border-bottom: 1px solid #333;">
-        <td style="padding: 10px; font-weight: bold;">{{ ativo.fundo }}</td>
-        <td style="padding: 10px; color: #4CAF50;">
-          R$ {{ ativo.precoAtual | number:'1.2-2' }}
-        </td>
-      </tr>
-    </tbody>
-  </table>
+  <h2 *ngIf="!carregandoTabela" style="font-weight: 400; font-size: 1.5rem; margin-bottom: 20px;">Destaques da Carteira</h2>
   
-  <button (click)="buscarCotacoes()" style="margin-top: 20px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">
+  <div *ngIf="!carregandoTabela" style="display: flex; gap: 20px; margin-bottom: 40px; flex-wrap: wrap;">
+    <div *ngFor="let destaque of ativos | slice:0:3" style="flex: 1; min-width: 250px; background-color: #262730; padding: 25px; border-radius: 8px;">
+      <p style="color: #9e9e9e; margin: 0 0 5px 0; font-size: 1.1rem;">{{ destaque.fundo }}</p>
+      <h3 style="margin: 0; font-size: 2.5rem; font-weight: 600;">R$ {{ destaque.precoAtual | number:'1.2-2' }}</h3>
+      <p style="margin: 10px 0 0 0; font-weight: 600; font-size: 1.2rem;" [style.color]="destaque.variacao >= 0 ? '#09ab3b' : '#ff4b4b'">
+        {{ destaque.variacao > 0 ? '▲' : '▼' }} {{ destaque.variacao > 0 ? '+' : '' }}{{ destaque.variacao | number:'1.2-2' }}%
+      </p>
+    </div>
+  </div>
+
+  <hr *ngIf="!carregandoTabela" style="border-color: #262730; margin: 30px 0;">
+
+  <h2 *ngIf="!carregandoTabela" style="font-weight: 400; font-size: 1.5rem; margin-bottom: 20px;">Posição Completa</h2>
+  
+  <div style="background-color: #262730; border-radius: 8px; overflow: hidden; margin-bottom: 30px;">
+    <table *ngIf="!carregandoTabela" style="width: 100%; text-align: left; border-collapse: collapse;">
+      <thead>
+        <tr style="border-bottom: 1px solid #4CAF50; background-color: #1e1e24;">
+          <th style="padding: 15px; color: #fafafa;">Ativo</th>
+          <th style="padding: 15px; color: #fafafa;">Preço Atual</th>
+          <th style="padding: 15px; color: #fafafa;">Variação (%)</th>
+          <th style="padding: 15px; color: #fafafa;">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let ativo of ativos" style="border-bottom: 1px solid #333;">
+          <td style="padding: 15px; font-weight: 600; color: #fafafa;">{{ ativo.fundo }}</td>
+          <td style="padding: 15px; color: #fafafa;">R$ {{ ativo.precoAtual | number:'1.2-2' }}</td>
+          <td style="padding: 15px; font-weight: 600;" [style.color]="ativo.variacao >= 0 ? '#09ab3b' : '#ff4b4b'">
+            {{ ativo.variacao > 0 ? '+' : '' }}{{ ativo.variacao | number:'1.2-2' }}%
+          </td>
+          <td style="padding: 15px; color: #9e9e9e;">{{ ativo.status }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <button (click)="buscarCotacoes()" style="margin-bottom: 40px; padding: 12px 24px; background-color: #ff4b4b; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 1rem;">
     Atualizar Cotações
   </button>
+
+  <div style="background-color: #1a1a24; padding: 30px; border-radius: 8px; border-left: 5px solid #9c27b0;">
+    <h2 style="margin-top: 0; color: #e1bee7; font-weight: 400;">🔮 Oráculo Preditivo (Random Forest)</h2>
+    <p style="color: #aaa; margin-bottom: 25px; font-size: 1.1rem;">Preveja o próximo dividendo antes de o mercado precificar.</p>
+    
+    <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+      <input type="text" [(ngModel)]="tickerIA" placeholder="Ex: VGIR11" 
+             style="padding: 12px 15px; border-radius: 4px; border: 1px solid #333; background-color: #0e1117; color: white; width: 250px; text-transform: uppercase; font-size: 1rem;">
+      
+      <button (click)="rodarInteligenciaArtificial()" 
+              style="padding: 12px 25px; background-color: #9c27b0; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 1rem;">
+        Rodar Algoritmo
+      </button>
+    </div>
+
+    <div *ngIf="carregandoIA" style="color: #e1bee7; font-weight: bold; font-size: 1.1rem;">
+      <p>🧠 A treinar o modelo de Machine Learning com o histórico... Aguarde.</p>
+    </div>
+
+    <div *ngIf="erroIA" style="color: #ff4b4b; background-color: rgba(255,75,75,0.1); padding: 15px; border-radius: 4px; border: 1px solid #ff4b4b;">
+      <p style="margin: 0; font-weight: bold;">❌ {{ erroIA }}</p>
+    </div>
+
+    <div *ngIf="resultadoIA" style="background-color: #262730; padding: 25px; border-radius: 4px; border: 1px solid #4a4a5a; margin-top: 25px;">
+      <h3 style="color: #09ab3b; margin-top: 0; font-size: 1.5rem;">Previsão para {{ resultadoIA.ticker }}</h3>
+      
+      <div style="display: flex; gap: 50px; flex-wrap: wrap;">
+        <div>
+          <p style="color: #9e9e9e; margin-bottom: 5px; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Erro Médio (MAE)</p>
+          <p style="font-size: 1.5rem; margin: 0; font-weight: 600; color: #fafafa;">R$ {{ resultadoIA.mae | number:'1.4-4' }}</p>
+        </div>
+        <div>
+          <p style="color: #9e9e9e; margin-bottom: 5px; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Próximo Rendimento Previsto</p>
+          <p style="font-size: 2.5rem; font-weight: bold; color: #09ab3b; margin: 0;">R$ {{ resultadoIA.previsao | number:'1.4-4' }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
