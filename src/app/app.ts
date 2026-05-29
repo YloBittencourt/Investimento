@@ -20,7 +20,6 @@ export class App implements OnInit {
   erroIA: string = '';
 
   private http = inject(HttpClient);
-  // O Desfibrilador do Angular
   private cdr = inject(ChangeDetectorRef); 
 
   ngOnInit() {
@@ -31,15 +30,31 @@ export class App implements OnInit {
     this.carregandoTabela = true;
     this.http.get<any>('http://localhost:8000/api/cotacoes').subscribe({
       next: (resposta) => {
-        this.ativos = resposta.ativos;
+        // Prepara os ativos para poderem ser editados
+        this.ativos = resposta.ativos.map((ativo: any) => ({ ...ativo, editando: false }));
         this.carregandoTabela = false;
-        this.cdr.detectChanges(); // Força a tabela a aparecer
+        this.cdr.detectChanges();
       },
       error: (erro) => {
         console.error('Falha na Tabela:', erro);
         this.carregandoTabela = false;
         this.cdr.detectChanges();
       }
+    });
+  }
+
+  salvarEdicao(ativo: any) {
+    const payload = {
+      quantidade: ativo.quantidade,
+      preco_medio: ativo.precoMedio
+    };
+    
+    this.http.put(`http://localhost:8000/api/ativos/${ativo.fundo}`, payload).subscribe({
+      next: () => {
+        ativo.editando = false; 
+        this.cdr.detectChanges();
+      },
+      error: (erro) => console.error('Erro ao salvar:', erro)
     });
   }
 
@@ -50,7 +65,7 @@ export class App implements OnInit {
     this.carregandoIA = true;
     this.resultadoIA = null;
     this.erroIA = '';
-    this.cdr.detectChanges(); // Força o "Aguarde..." a aparecer na hora
+    this.cdr.detectChanges(); 
 
     this.http.get<any>(`http://localhost:8000/api/previsao/${tickerLimpo}`).subscribe({
       next: (resposta) => {
@@ -60,10 +75,9 @@ export class App implements OnInit {
           this.erroIA = resposta.erro || 'Erro ao processar modelo.';
         }
         this.carregandoIA = false;
-        this.cdr.detectChanges(); // Força o resultado da IA a piscar na tela instantaneamente!
+        this.cdr.detectChanges(); 
       },
       error: (erro) => {
-        console.error('Erro no Oráculo:', erro);
         this.erroIA = `Falha HTTP. Verifique o terminal do Python.`;
         this.carregandoIA = false;
         this.cdr.detectChanges();

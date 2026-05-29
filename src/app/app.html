@@ -1,7 +1,7 @@
 <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 30px; background-color: #0e1117; color: #fafafa; min-height: 100vh;">
 
   <h1 style="font-weight: 600; margin-bottom: 5px;">📊 Painel de Controle - Máquina de Renda</h1>
-  <p style="color: #9e9e9e; font-size: 1.1rem; margin-top: 0;">Monitoramento em tempo real dos seus Fundos Imobiliários e Fiagros.</p>
+  <p style="color: #9e9e9e; font-size: 1.1rem; margin-top: 0;">Monitoramento e Rebalanceamento do Patrimônio.</p>
   <hr style="border-color: #262730; margin: 30px 0;">
 
   <div *ngIf="carregandoTabela" style="color: #ff4b4b; font-weight: bold; margin-bottom: 20px; font-size: 1.2rem;">
@@ -20,69 +20,85 @@
     </div>
   </div>
 
-  <hr *ngIf="!carregandoTabela" style="border-color: #262730; margin: 30px 0;">
-
   <h2 *ngIf="!carregandoTabela" style="font-weight: 400; font-size: 1.5rem; margin-bottom: 20px;">Posição Completa</h2>
   
-  <div style="background-color: #262730; border-radius: 8px; overflow: hidden; margin-bottom: 30px;">
+  <div style="background-color: #262730; border-radius: 8px; overflow: hidden; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
     <table *ngIf="!carregandoTabela" style="width: 100%; text-align: left; border-collapse: collapse;">
       <thead>
-        <tr style="border-bottom: 1px solid #4CAF50; background-color: #1e1e24;">
+        <tr style="border-bottom: 2px solid #4CAF50; background-color: #1e1e24;">
           <th style="padding: 15px; color: #fafafa;">Ativo</th>
           <th style="padding: 15px; color: #fafafa;">Preço Atual</th>
-          <th style="padding: 15px; color: #fafafa;">Variação (%)</th>
-          <th style="padding: 15px; color: #fafafa;">Status</th>
+          <th style="padding: 15px; color: #fafafa;">Preço Médio</th>
+          <th style="padding: 15px; color: #fafafa;">Qtd</th>
+          <th style="padding: 15px; color: #fafafa;">Lucro / Prejuízo</th>
+          <th style="padding: 15px; color: #fafafa;">Ações</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let ativo of ativos" style="border-bottom: 1px solid #333;">
-          <td style="padding: 15px; font-weight: 600; color: #fafafa;">{{ ativo.fundo }}</td>
-          <td style="padding: 15px; color: #fafafa;">R$ {{ ativo.precoAtual | number:'1.2-2' }}</td>
-          <td style="padding: 15px; font-weight: 600;" [style.color]="ativo.variacao >= 0 ? '#09ab3b' : '#ff4b4b'">
-            {{ ativo.variacao > 0 ? '+' : '' }}{{ ativo.variacao | number:'1.2-2' }}%
+        <tr *ngFor="let ativo of ativos" style="border-bottom: 1px solid #333; background-color: #262730;">
+          <td style="padding: 15px; font-weight: 600; color: #fafafa;">{{ ativo.fundo }}
+            <span style="display: block; font-size: 0.8rem; color: #9e9e9e; font-weight: normal;">{{ ativo.status }}</span>
           </td>
-          <td style="padding: 15px; color: #9e9e9e;">{{ ativo.status }}</td>
+          
+          <td style="padding: 15px; color: #fafafa; font-weight: bold;">R$ {{ ativo.precoAtual | number:'1.2-2' }}</td>
+          
+          <td style="padding: 15px; color: #fafafa;">
+            <span *ngIf="!ativo.editando">R$ {{ ativo.precoMedio | number:'1.2-2' }}</span>
+            <input *ngIf="ativo.editando" type="number" [(ngModel)]="ativo.precoMedio" style="width: 80px; padding: 6px; background: #0e1117; color: white; border: 1px solid #9c27b0; border-radius: 4px;">
+          </td>
+          
+          <td style="padding: 15px; color: #fafafa;">
+            <span *ngIf="!ativo.editando">{{ ativo.quantidade }}</span>
+            <input *ngIf="ativo.editando" type="number" [(ngModel)]="ativo.quantidade" style="width: 80px; padding: 6px; background: #0e1117; color: white; border: 1px solid #9c27b0; border-radius: 4px;">
+          </td>
+          
+          <td style="padding: 15px; font-weight: bold;" 
+              [style.color]="(ativo.precoAtual - ativo.precoMedio) >= 0 ? '#09ab3b' : '#ff4b4b'">
+            R$ {{ ((ativo.precoAtual - ativo.precoMedio) * ativo.quantidade) | number:'1.2-2' }}
+          </td>
+          
+          <td style="padding: 15px;">
+            <button *ngIf="!ativo.editando" (click)="ativo.editando = true" style="background: transparent; color: #9c27b0; border: 1px solid #9c27b0; padding: 6px 12px; cursor: pointer; border-radius: 4px; transition: 0.3s;">
+              Editar
+            </button>
+            <button *ngIf="ativo.editando" (click)="salvarEdicao(ativo)" style="background: #9c27b0; color: white; border: none; padding: 7px 12px; cursor: pointer; border-radius: 4px;">
+              Salvar
+            </button>
+          </td>
         </tr>
       </tbody>
     </table>
   </div>
 
-  <button (click)="buscarCotacoes()" style="margin-bottom: 40px; padding: 12px 24px; background-color: #ff4b4b; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 1rem;">
-    Atualizar Cotações
+  <button (click)="buscarCotacoes()" style="margin-bottom: 40px; padding: 12px 24px; background-color: #4CAF50; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 1rem;">
+    Atualizar Mercado
   </button>
 
   <div style="background-color: #1a1a24; padding: 30px; border-radius: 8px; border-left: 5px solid #9c27b0;">
     <h2 style="margin-top: 0; color: #e1bee7; font-weight: 400;">🔮 Oráculo Preditivo (Random Forest)</h2>
-    <p style="color: #aaa; margin-bottom: 25px; font-size: 1.1rem;">Preveja o próximo dividendo antes de o mercado precificar.</p>
     
-    <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+    <div style="display: flex; gap: 15px; margin-bottom: 20px;">
       <input type="text" [(ngModel)]="tickerIA" placeholder="Ex: VGIR11" 
-             style="padding: 12px 15px; border-radius: 4px; border: 1px solid #333; background-color: #0e1117; color: white; width: 250px; text-transform: uppercase; font-size: 1rem;">
+             style="padding: 12px 15px; border-radius: 4px; border: 1px solid #333; background-color: #0e1117; color: white; width: 250px; text-transform: uppercase;">
       
       <button (click)="rodarInteligenciaArtificial()" 
-              style="padding: 12px 25px; background-color: #9c27b0; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 1rem;">
+              style="padding: 12px 25px; background-color: #9c27b0; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
         Rodar Algoritmo
       </button>
     </div>
 
-    <div *ngIf="carregandoIA" style="color: #e1bee7; font-weight: bold; font-size: 1.1rem;">
-      <p>🧠 A treinar o modelo de Machine Learning com o histórico... Aguarde.</p>
-    </div>
-
-    <div *ngIf="erroIA" style="color: #ff4b4b; background-color: rgba(255,75,75,0.1); padding: 15px; border-radius: 4px; border: 1px solid #ff4b4b;">
-      <p style="margin: 0; font-weight: bold;">❌ {{ erroIA }}</p>
-    </div>
+    <div *ngIf="carregandoIA" style="color: #e1bee7; font-weight: bold;">🧠 A treinar o modelo... Aguarde.</div>
+    <div *ngIf="erroIA" style="color: #ff4b4b; background-color: rgba(255,75,75,0.1); padding: 15px; border-radius: 4px; border: 1px solid #ff4b4b;">❌ {{ erroIA }}</div>
 
     <div *ngIf="resultadoIA" style="background-color: #262730; padding: 25px; border-radius: 4px; border: 1px solid #4a4a5a; margin-top: 25px;">
-      <h3 style="color: #09ab3b; margin-top: 0; font-size: 1.5rem;">Previsão para {{ resultadoIA.ticker }}</h3>
-      
-      <div style="display: flex; gap: 50px; flex-wrap: wrap;">
+      <h3 style="color: #09ab3b; margin-top: 0;">Previsão para {{ resultadoIA.ticker }}</h3>
+      <div style="display: flex; gap: 50px;">
         <div>
-          <p style="color: #9e9e9e; margin-bottom: 5px; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Erro Médio (MAE)</p>
+          <p style="color: #9e9e9e; margin-bottom: 5px; font-size: 0.9rem;">Erro Médio (MAE)</p>
           <p style="font-size: 1.5rem; margin: 0; font-weight: 600; color: #fafafa;">R$ {{ resultadoIA.mae | number:'1.4-4' }}</p>
         </div>
         <div>
-          <p style="color: #9e9e9e; margin-bottom: 5px; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Próximo Rendimento Previsto</p>
+          <p style="color: #9e9e9e; margin-bottom: 5px; font-size: 0.9rem;">Próximo Rendimento Previsto</p>
           <p style="font-size: 2.5rem; font-weight: bold; color: #09ab3b; margin: 0;">R$ {{ resultadoIA.previsao | number:'1.4-4' }}</p>
         </div>
       </div>
