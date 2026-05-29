@@ -19,6 +19,12 @@ export class App implements OnInit {
   carregandoIA = false;
   erroIA: string = '';
 
+  // Novas variáveis do Rebalanceamento
+  valorAporte: number = 0;
+  comprasRebalanceamento: any[] = [];
+  sobraRebalanceamento: number = 0;
+  carregandoRebalanceamento = false;
+
   private http = inject(HttpClient);
   private cdr = inject(ChangeDetectorRef); 
 
@@ -30,7 +36,6 @@ export class App implements OnInit {
     this.carregandoTabela = true;
     this.http.get<any>('http://localhost:8000/api/cotacoes').subscribe({
       next: (resposta) => {
-        // Prepara os ativos para poderem ser editados
         this.ativos = resposta.ativos.map((ativo: any) => ({ ...ativo, editando: false }));
         this.carregandoTabela = false;
         this.cdr.detectChanges();
@@ -54,7 +59,28 @@ export class App implements OnInit {
         ativo.editando = false; 
         this.cdr.detectChanges();
       },
-      error: (erro) => console.error('Erro ao salvar:', erro)
+      error: (erro) => console.error('Erro ao guardar:', erro)
+    });
+  }
+
+  calcularRebalanceamento() {
+    if (this.valorAporte <= 0) return;
+    this.carregandoRebalanceamento = true;
+    this.comprasRebalanceamento = [];
+    this.cdr.detectChanges();
+
+    this.http.post<any>('http://localhost:8000/api/rebalancear', { aporte: this.valorAporte }).subscribe({
+      next: (resposta) => {
+        this.comprasRebalanceamento = resposta.compras;
+        this.sobraRebalanceamento = resposta.sobra;
+        this.carregandoRebalanceamento = false;
+        this.cdr.detectChanges();
+      },
+      error: (erro) => {
+        console.error('Erro no cálculo:', erro);
+        this.carregandoRebalanceamento = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 
