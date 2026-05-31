@@ -1,0 +1,26 @@
+{
+    "MANA11": {
+        "quantidade": 1963,
+        "preco_medio": 9.27
+    },
+    "VGIR11": {
+        "quantidade": 1371,
+        "preco_medio": 9.47
+    },
+    "RZTR11": {
+        "quantidade": 86,
+        "preco_medio": 92.47
+    },
+    "GGRC11": {
+        "quantidade": 602,
+        "preco_medio": 9.98
+    },
+    "LIFE11": {
+        "quantidade": 2300,
+        "preco_medio": 8.83
+    },
+    "CPTI11": {
+        "quantidade": 125,
+        "preco_medio": 88.5
+    }
+}
