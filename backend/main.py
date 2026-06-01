@@ -256,3 +256,57 @@ def prever_rendimento_carteira():
         "total_previsto": total_previsto,
         "variacao_pct": variacao_pct
     }
+
+    # =========================================================
+# NOVA ROTA: PESQUISA LIVRE DE FUNDOS (PÁGINA INICIAL)
+# =========================================================
+@app.get("/api/fii/{ticker}")
+def buscar_fii_individual(ticker: str):
+    ticker_upper = ticker.upper().strip()
+    preco = 0.0
+    variacao = 0.0
+    ultimo_div = 0.0
+
+    # 1. Tentar pegar o preço atual na Brapi
+    try:
+        url = f"https://brapi.dev/api/quote/{ticker_upper}?token={BRAPI_TOKEN}"
+        res = requests.get(url, timeout=5)
+        if res.status_code == 200 and "results" in res.json():
+            dados = res.json()["results"][0]
+            preco = dados.get("regularMarketPrice", 0.0)
+            variacao = dados.get("regularMarketChangePercent", 0.0)
+    except Exception:
+        pass
+
+    # Se a Brapi falhar, tenta o Yahoo como Plano B
+    if preco == 0.0:
+        try:
+            hist = yf.Ticker(f"{ticker_upper}.SA").history(period="2d")
+            if len(hist) > 0:
+                preco = float(hist['Close'].iloc[-1])
+                if len(hist) > 1:
+                    variacao = ((preco - float(hist['Close'].iloc[-2])) / float(hist['Close'].iloc[-2])) * 100
+        except Exception:
+            pass
+
+    # 2. Pegar o último dividendo pago (Yahoo)
+    try:
+        fundo = yf.Ticker(f"{ticker_upper}.SA")
+        hist_div = fundo.history(period="1y")
+        if not hist_div.empty and 'Dividends' in hist_div.columns:
+            df_div = hist_div[hist_div['Dividends'] > 0]
+            if not df_div.empty:
+                ultimo_div = float(df_div['Dividends'].iloc[-1])
+    except Exception:
+        pass
+
+    if preco == 0.0:
+        return {"sucesso": False, "erro": f"Fundo '{ticker_upper}' não encontrado na B3."}
+
+    return {
+        "sucesso": True,
+        "ticker": ticker_upper,
+        "preco": preco,
+        "variacao": variacao,
+        "ultimo_dividendo": ultimo_div
+    }

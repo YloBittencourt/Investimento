@@ -11,22 +11,26 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './app.css'
 })
 export class App implements OnInit {
+  // --- NAVEGAÇÃO SPA ---
+  visaoAtual: 'home' | 'carteira' = 'home';
+
+  // --- VARIÁVEIS DA PÁGINA INICIAL (BUSCA) ---
+  buscaTicker: string = '';
+  buscandoFii: boolean = false;
+  resultadoBusca: any = null;
+  erroBusca: string = '';
+
+  // --- VARIÁVEIS DA CARTEIRA ---
   ativos: any[] = [];
   carregandoTabela = true;
-  
-  // Rebalanceamento
   valorAporte: number = 0;
   comprasRebalanceamento: any[] = [];
   sobraRebalanceamento: number = 0;
   carregandoRebalanceamento = false;
-
-  // IA Preditiva (Ativo Individual)
   tickerIA: string = '';
   resultadoIA: any = null;
   carregandoIA = false;
   erroIA: string = '';
-
-  // IA Preditiva (Carteira Completa)
   resultadoCarteiraIA: any = null;
   carregandoCarteiraIA = false;
   erroCarteiraIA: string = '';
@@ -38,6 +42,38 @@ export class App implements OnInit {
     this.buscarCotacoes();
   }
 
+  // --- FUNÇÕES DE NAVEGAÇÃO ---
+  mudarVisao(visao: 'home' | 'carteira') {
+    this.visaoAtual = visao;
+    this.cdr.detectChanges();
+  }
+
+  // --- FUNÇÕES DA PÁGINA INICIAL ---
+  buscarFiiHome() {
+    const tickerLimpo = this.buscaTicker.trim();
+    if (!tickerLimpo) return;
+
+    this.buscandoFii = true;
+    this.resultadoBusca = null;
+    this.erroBusca = '';
+    this.cdr.detectChanges();
+
+    this.http.get<any>(`http://localhost:8000/api/fii/${tickerLimpo}`).subscribe({
+      next: (res) => {
+        if (res.sucesso) { this.resultadoBusca = res; } 
+        else { this.erroBusca = res.erro; }
+        this.buscandoFii = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.erroBusca = 'Falha na conexão com o servidor.';
+        this.buscandoFii = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  // --- FUNÇÕES DA CARTEIRA (Já existentes) ---
   buscarCotacoes() {
     this.carregandoTabela = true;
     this.http.get<any>('http://localhost:8000/api/cotacoes').subscribe({
@@ -46,8 +82,7 @@ export class App implements OnInit {
         this.carregandoTabela = false;
         this.cdr.detectChanges();
       },
-      error: (erro) => {
-        console.error('Falha na Tabela:', erro);
+      error: () => {
         this.carregandoTabela = false;
         this.cdr.detectChanges();
       }
@@ -57,11 +92,7 @@ export class App implements OnInit {
   salvarEdicao(ativo: any) {
     const payload = { quantidade: ativo.quantidade, preco_medio: ativo.precoMedio };
     this.http.put(`http://localhost:8000/api/ativos/${ativo.fundo}`, payload).subscribe({
-      next: () => {
-        ativo.editando = false; 
-        this.cdr.detectChanges();
-      },
-      error: (erro) => console.error('Erro ao guardar:', erro)
+      next: () => { ativo.editando = false; this.cdr.detectChanges(); }
     });
   }
 
@@ -78,7 +109,7 @@ export class App implements OnInit {
         this.carregandoRebalanceamento = false;
         this.cdr.detectChanges();
       },
-      error: (erro) => {
+      error: () => {
         this.carregandoRebalanceamento = false;
         this.cdr.detectChanges();
       }
@@ -88,43 +119,37 @@ export class App implements OnInit {
   rodarInteligenciaArtificial() {
     const tickerLimpo = this.tickerIA.trim();
     if (!tickerLimpo) return;
-    
     this.carregandoIA = true;
     this.resultadoIA = null;
     this.erroIA = '';
     this.cdr.detectChanges(); 
-
     this.http.get<any>(`http://localhost:8000/api/previsao/${tickerLimpo}`).subscribe({
-      next: (resposta) => {
-        if (resposta.sucesso) { this.resultadoIA = resposta; } 
-        else { this.erroIA = resposta.erro || 'Erro ao processar modelo.'; }
+      next: (res) => {
+        if (res.sucesso) { this.resultadoIA = res; } else { this.erroIA = res.erro; }
         this.carregandoIA = false;
         this.cdr.detectChanges(); 
       },
-      error: (erro) => {
-        this.erroIA = `Falha HTTP. Verifique o terminal do Python.`;
+      error: () => {
+        this.erroIA = `Falha HTTP.`;
         this.carregandoIA = false;
         this.cdr.detectChanges();
       }
     });
   }
 
-  // NOVA FUNÇÃO: Aciona a IA para toda a carteira
   preverRendaCarteira() {
     this.carregandoCarteiraIA = true;
     this.resultadoCarteiraIA = null;
     this.erroCarteiraIA = '';
     this.cdr.detectChanges();
-
     this.http.get<any>('http://localhost:8000/api/previsao_carteira').subscribe({
-      next: (resposta) => {
-        if (resposta.sucesso) { this.resultadoCarteiraIA = resposta; } 
-        else { this.erroCarteiraIA = resposta.erro || 'Erro ao prever a carteira.'; }
+      next: (res) => {
+        if (res.sucesso) { this.resultadoCarteiraIA = res; } else { this.erroCarteiraIA = res.erro; }
         this.carregandoCarteiraIA = false;
         this.cdr.detectChanges();
       },
-      error: (erro) => {
-        this.erroCarteiraIA = 'Falha ao conectar com o motor de Machine Learning.';
+      error: () => {
+        this.erroCarteiraIA = 'Falha ao conectar com o servidor.';
         this.carregandoCarteiraIA = false;
         this.cdr.detectChanges();
       }

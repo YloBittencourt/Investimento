@@ -1,143 +1,185 @@
-<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 30px; background-color: #0e1117; color: #fafafa; min-height: 100vh;">
+<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0e1117; color: #fafafa; min-height: 100vh;">
 
-  <h1 style="font-weight: 600; margin-bottom: 5px;">📊 Painel de Controle - Máquina de Renda</h1>
-  <p style="color: #9e9e9e; font-size: 1.1rem; margin-top: 0;">Monitoramento e Rebalanceamento do Património.</p>
-  <hr style="border-color: #262730; margin: 30px 0;">
-
-  <div *ngIf="carregandoTabela" style="color: #ff4b4b; font-weight: bold; margin-bottom: 20px; font-size: 1.2rem;">
-    ⏳ A sincronizar com a B3... Aguarde.
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; background-color: #1e1e24; border-bottom: 1px solid #333;">
+    <div>
+      <h2 style="margin: 0; color: #4CAF50; display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 1.5rem;">⚙️</span> Máquina de Renda
+      </h2>
+    </div>
+    <div style="display: flex; gap: 15px;">
+      <button (click)="mudarVisao('home')" 
+              [ngStyle]="{'background-color': visaoAtual === 'home' ? '#333' : 'transparent', 'color': visaoAtual === 'home' ? '#4CAF50' : '#fafafa'}"
+              style="padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: 0.3s;">
+        🏠 Início
+      </button>
+      <button (click)="mudarVisao('carteira')" 
+              [ngStyle]="{'background-color': visaoAtual === 'carteira' ? '#333' : 'transparent', 'color': visaoAtual === 'carteira' ? '#4CAF50' : '#fafafa'}"
+              style="padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: 0.3s;">
+        💼 Minha Carteira
+      </button>
+    </div>
   </div>
 
-  <h2 *ngIf="!carregandoTabela" style="font-weight: 400; font-size: 1.5rem; margin-bottom: 20px;">Destaques da Carteira</h2>
-  <div *ngIf="!carregandoTabela" style="display: flex; gap: 20px; margin-bottom: 40px; flex-wrap: wrap;">
-    <div *ngFor="let destaque of ativos | slice:0:3" style="flex: 1; min-width: 250px; background-color: #262730; padding: 25px; border-radius: 8px;">
-      <p style="color: #9e9e9e; margin: 0 0 5px 0; font-size: 1.1rem;">{{ destaque.fundo }}</p>
-      <h3 style="margin: 0; font-size: 2.5rem; font-weight: 600;">R$ {{ destaque.precoAtual | number:'1.2-2' }}</h3>
-      <p style="margin: 10px 0 0 0; font-weight: 600; font-size: 1.2rem;" [style.color]="destaque.variacao >= 0 ? '#09ab3b' : '#ff4b4b'">
-        {{ destaque.variacao > 0 ? '▲' : '▼' }} {{ destaque.variacao > 0 ? '+' : '' }}{{ destaque.variacao | number:'1.2-2' }}%
+  <div style="padding: 40px;">
+
+    <div *ngIf="visaoAtual === 'home'" style="max-width: 800px; margin: 0 auto; text-align: center; padding-top: 50px;">
+      
+      <h1 style="font-size: 3rem; margin-bottom: 20px; font-weight: 800;">Inteligência <span style="color: #4CAF50;">Financeira</span> na palma da mão.</h1>
+      <p style="color: #aaa; font-size: 1.2rem; line-height: 1.6; margin-bottom: 50px;">
+        Pesquise fundos, organize a sua carteira, utilize a nossa Inteligência Artificial para prever dividendos antes do mercado e otimize os seus aportes mensais de forma automática.
       </p>
-    </div>
-  </div>
 
-  <h2 *ngIf="!carregandoTabela" style="font-weight: 400; font-size: 1.5rem; margin-bottom: 20px;">Posição Completa</h2>
-  <div style="background-color: #262730; border-radius: 8px; overflow: hidden; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
-    <table *ngIf="!carregandoTabela" style="width: 100%; text-align: left; border-collapse: collapse;">
-      <thead>
-        <tr style="border-bottom: 2px solid #4CAF50; background-color: #1e1e24;">
-          <th style="padding: 15px; color: #fafafa;">Ativo</th>
-          <th style="padding: 15px; color: #fafafa;">Preço Atual</th>
-          <th style="padding: 15px; color: #fafafa;">Preço Médio</th>
-          <th style="padding: 15px; color: #fafafa;">Qtd</th>
-          <th style="padding: 15px; color: #fafafa;">Lucro / Prejuízo</th>
-          <th style="padding: 15px; color: #fafafa;">Ações</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let ativo of ativos" style="border-bottom: 1px solid #333; background-color: #262730;">
-          <td style="padding: 15px; font-weight: 600; color: #fafafa;">{{ ativo.fundo }} <span style="display: block; font-size: 0.8rem; color: #9e9e9e; font-weight: normal;">{{ ativo.status }}</span></td>
-          <td style="padding: 15px; color: #fafafa; font-weight: bold;">R$ {{ ativo.precoAtual | number:'1.2-2' }}</td>
-          <td style="padding: 15px; color: #fafafa;">
-            <span *ngIf="!ativo.editando">R$ {{ ativo.precoMedio | number:'1.2-2' }}</span>
-            <input *ngIf="ativo.editando" type="number" [(ngModel)]="ativo.precoMedio" style="width: 80px; padding: 6px; background: #0e1117; color: white; border: 1px solid #9c27b0; border-radius: 4px;">
-          </td>
-          <td style="padding: 15px; color: #fafafa;">
-            <span *ngIf="!ativo.editando">{{ ativo.quantidade }}</span>
-            <input *ngIf="ativo.editando" type="number" [(ngModel)]="ativo.quantidade" style="width: 80px; padding: 6px; background: #0e1117; color: white; border: 1px solid #9c27b0; border-radius: 4px;">
-          </td>
-          <td style="padding: 15px; font-weight: bold;" [style.color]="(ativo.precoAtual - ativo.precoMedio) >= 0 ? '#09ab3b' : '#ff4b4b'">
-            R$ {{ ((ativo.precoAtual - ativo.precoMedio) * ativo.quantidade) | number:'1.2-2' }}
-          </td>
-          <td style="padding: 15px;">
-            <button *ngIf="!ativo.editando" (click)="ativo.editando = true" style="background: transparent; color: #9c27b0; border: 1px solid #9c27b0; padding: 6px 12px; cursor: pointer; border-radius: 4px; transition: 0.3s;">Editar</button>
-            <button *ngIf="ativo.editando" (click)="salvarEdicao(ativo)" style="background: #9c27b0; color: white; border: none; padding: 7px 12px; cursor: pointer; border-radius: 4px;">Guardar</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+      <div style="background-color: #262730; padding: 40px; border-radius: 8px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+        <h3 style="margin-top: 0; color: #fff; font-size: 1.5rem;">🔍 Raio-X de Ativos</h3>
+        <p style="color: #9e9e9e; margin-bottom: 20px;">Digite o código de qualquer FII ou Fiagro da B3.</p>
+        
+        <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 30px;">
+          <input type="text" [(ngModel)]="buscaTicker" (keyup.enter)="buscarFiiHome()" placeholder="Ex: MXRF11, KNCR11..." 
+                 style="padding: 15px 20px; border-radius: 4px; border: 1px solid #4a4a5a; background-color: #0e1117; color: white; width: 100%; max-width: 300px; font-size: 1.2rem; text-transform: uppercase;">
+          
+          <button (click)="buscarFiiHome()" 
+                  style="padding: 15px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 1.1rem;">
+            Pesquisar
+          </button>
+        </div>
 
-  <button (click)="buscarCotacoes()" style="margin-bottom: 40px; padding: 12px 24px; background-color: #4CAF50; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 1rem;">
-    Atualizar Mercado
-  </button>
+        <div *ngIf="buscandoFii" style="color: #4CAF50; font-weight: bold; font-size: 1.1rem;">⏳ A consultar a B3...</div>
+        <div *ngIf="erroBusca" style="color: #ff4b4b; background-color: rgba(255,75,75,0.1); padding: 15px; border-radius: 4px;">❌ {{ erroBusca }}</div>
 
-  <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-bottom: 40px;">
-    <div style="flex: 1; min-width: 350px; background-color: #1a1a24; padding: 30px; border-radius: 8px; border-top: 5px solid #00acc1;">
-      <h2 style="margin-top: 0; color: #b2ebf2; font-weight: 400;">⚖️ Motor de Aportes</h2>
-      <p style="color: #aaa; margin-bottom: 25px; font-size: 1rem;">Otimize a sua diversificação. Insira o valor disponível.</p>
-      <div style="display: flex; gap: 15px; margin-bottom: 20px;">
-        <input type="number" [(ngModel)]="valorAporte" placeholder="R$ 1000" style="padding: 12px 15px; border-radius: 4px; border: 1px solid #333; background-color: #0e1117; color: white; width: 100%; max-width: 200px; font-size: 1rem;">
-        <button (click)="calcularRebalanceamento()" style="padding: 12px 25px; background-color: #00acc1; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Gerar Lista</button>
-      </div>
-      <div *ngIf="carregandoRebalanceamento" style="color: #b2ebf2; font-weight: bold;">⚙️ A processar algoritmo...</div>
-      <div *ngIf="comprasRebalanceamento.length > 0" style="margin-top: 25px;">
-        <h3 style="color: #09ab3b; margin-top: 0; font-size: 1.2rem;">📝 Compras Recomendadas:</h3>
-        <ul style="list-style-type: none; padding: 0; margin-bottom: 20px;">
-          <li *ngFor="let item of comprasRebalanceamento" style="background-color: #262730; padding: 15px; margin-bottom: 10px; border-radius: 4px; border-left: 3px solid #00acc1;">
-            <strong style="color: #fafafa; font-size: 1.1rem;">Comprar {{ item.quantidade }} cotas de {{ item.fundo }}</strong><br>
-            <span style="color: #aaa; font-size: 0.9rem;">Custo: R$ {{ item.total | number:'1.2-2' }}</span>
-          </li>
-        </ul>
-        <div style="background-color: rgba(9, 171, 59, 0.1); padding: 10px; border-radius: 4px; border: 1px solid #09ab3b; color: #09ab3b; font-weight: bold;">Sobras: R$ {{ sobraRebalanceamento | number:'1.2-2' }}</div>
-      </div>
-    </div>
+        <div *ngIf="resultadoBusca" style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+          <div style="background-color: #1e1e24; padding: 20px; border-radius: 8px; border-left: 4px solid #4CAF50; min-width: 150px;">
+            <p style="color: #9e9e9e; margin: 0 0 5px 0; font-size: 0.9rem; text-transform: uppercase;">Cotação Atual</p>
+            <h2 style="margin: 0; font-size: 2rem; color: #fafafa;">R$ {{ resultadoBusca.preco | number:'1.2-2' }}</h2>
+          </div>
 
-    <div style="flex: 1; min-width: 350px; background-color: #1a1a24; padding: 30px; border-radius: 8px; border-top: 5px solid #9c27b0;">
-      <h2 style="margin-top: 0; color: #e1bee7; font-weight: 400;">🔮 Oráculo Individual (ML)</h2>
-      <p style="color: #aaa; margin-bottom: 25px; font-size: 1rem;">Preveja o próximo dividendo de 1 fundo (Ex: VGIR11).</p>
-      <div style="display: flex; gap: 15px; margin-bottom: 20px;">
-        <input type="text" [(ngModel)]="tickerIA" placeholder="Ex: VGIR11" style="padding: 12px 15px; border-radius: 4px; border: 1px solid #333; background-color: #0e1117; color: white; width: 100%; max-width: 200px; text-transform: uppercase;">
-        <button (click)="rodarInteligenciaArtificial()" style="padding: 12px 25px; background-color: #9c27b0; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Processar</button>
-      </div>
-      <div *ngIf="carregandoIA" style="color: #e1bee7; font-weight: bold;">🧠 A treinar rede neural...</div>
-      <div *ngIf="erroIA" style="color: #ff4b4b; background-color: rgba(255,75,75,0.1); padding: 15px; border-radius: 4px; border: 1px solid #ff4b4b;">❌ {{ erroIA }}</div>
-      <div *ngIf="resultadoIA" style="background-color: #262730; padding: 25px; border-radius: 4px; border: 1px solid #4a4a5a; margin-top: 25px;">
-        <h3 style="color: #09ab3b; margin-top: 0;">{{ resultadoIA.ticker }}</h3>
-        <div style="display: flex; gap: 30px; flex-wrap: wrap;">
-          <div><p style="color: #9e9e9e; margin-bottom: 5px; font-size: 0.9rem;">Próximo Rendimento</p><p style="font-size: 2rem; font-weight: bold; color: #09ab3b; margin: 0;">R$ {{ resultadoIA.previsao | number:'1.4-4' }}</p></div>
+          <div style="background-color: #1e1e24; padding: 20px; border-radius: 8px; border-left: 4px solid" [ngStyle]="{'border-color': resultadoBusca.variacao >= 0 ? '#09ab3b' : '#ff4b4b'}">
+            <p style="color: #9e9e9e; margin: 0 0 5px 0; font-size: 0.9rem; text-transform: uppercase;">Variação Diária</p>
+            <h2 style="margin: 0; font-size: 2rem;" [style.color]="resultadoBusca.variacao >= 0 ? '#09ab3b' : '#ff4b4b'">
+              {{ resultadoBusca.variacao > 0 ? '+' : '' }}{{ resultadoBusca.variacao | number:'1.2-2' }}%
+            </h2>
+          </div>
+
+          <div style="background-color: #1e1e24; padding: 20px; border-radius: 8px; border-left: 4px solid #ff9800; min-width: 150px;">
+            <p style="color: #9e9e9e; margin: 0 0 5px 0; font-size: 0.9rem; text-transform: uppercase;">Último Rendimento</p>
+            <h2 style="margin: 0; font-size: 2rem; color: #ff9800;">R$ {{ resultadoBusca.ultimo_dividendo | number:'1.2-2' }}</h2>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <div style="background-color: #1a1a24; padding: 30px; border-radius: 8px; border-top: 5px solid #ff9800; margin-bottom: 50px;">
-    <h2 style="margin-top: 0; color: #ffe0b2; font-weight: 400;">💰 Projeção Global de Renda (Mês que vem)</h2>
-    <p style="color: #aaa; margin-bottom: 25px; font-size: 1.1rem;">A Inteligência Artificial analisa todo o seu portefólio para prever o montante total de dividendos que vai receber.</p>
-    
-    <button (click)="preverRendaCarteira()" style="padding: 12px 25px; background-color: #ff9800; color: #1e1e24; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 1.1rem; margin-bottom: 20px;">
-      Calcular Renda Futura
-    </button>
 
-    <div *ngIf="carregandoCarteiraIA" style="color: #ffb74d; font-weight: bold; font-size: 1.1rem;">
-      ⏳ Executando Machine Learning massivo na carteira... (isto pode demorar alguns segundos).
-    </div>
-
-    <div *ngIf="erroCarteiraIA" style="color: #ff4b4b; background-color: rgba(255,75,75,0.1); padding: 15px; border-radius: 4px; border: 1px solid #ff4b4b;">
-      ❌ {{ erroCarteiraIA }}
-    </div>
-
-    <div *ngIf="resultadoCarteiraIA" style="background-color: #262730; padding: 30px; border-radius: 8px; border: 1px solid #4a4a5a; margin-top: 20px; display: flex; gap: 40px; flex-wrap: wrap;">
+    <div *ngIf="visaoAtual === 'carteira'">
       
-      <div style="flex: 1; min-width: 200px;">
-        <p style="color: #9e9e9e; margin-bottom: 5px; font-size: 1rem; text-transform: uppercase;">Último Mês Recebido</p>
-        <p style="font-size: 2.5rem; font-weight: 600; color: #fafafa; margin: 0;">R$ {{ resultadoCarteiraIA.total_passado | number:'1.2-2' }}</p>
+      <h1 style="font-weight: 600; margin-top: 0; margin-bottom: 5px;">💼 O seu Património</h1>
+      <p style="color: #9e9e9e; font-size: 1.1rem; margin-top: 0;">Monitorização, edição e inteligência de dados na sua carteira.</p>
+      <hr style="border-color: #262730; margin: 30px 0;">
+
+      <div *ngIf="carregandoTabela" style="color: #ff4b4b; font-weight: bold; margin-bottom: 20px; font-size: 1.2rem;">
+        ⏳ A sincronizar com a B3... Aguarde.
       </div>
 
-      <div style="flex: 1; min-width: 200px;">
-        <p style="color: #9e9e9e; margin-bottom: 5px; font-size: 1rem; text-transform: uppercase;">Previsão Mês que Vem</p>
-        <p style="font-size: 2.5rem; font-weight: bold; margin: 0;" [style.color]="resultadoCarteiraIA.variacao_pct >= 0 ? '#09ab3b' : '#ff4b4b'">
-          R$ {{ resultadoCarteiraIA.total_previsto | number:'1.2-2' }}
-        </p>
-      </div>
-
-      <div style="flex: 1; min-width: 150px; display: flex; flex-direction: column; justify-content: center;">
-        <p style="color: #9e9e9e; margin-bottom: 5px; font-size: 1rem; text-transform: uppercase;">Evolução</p>
-        <div style="padding: 10px 15px; border-radius: 4px; font-weight: bold; font-size: 1.5rem; text-align: center;" 
-             [ngStyle]="{'background-color': resultadoCarteiraIA.variacao_pct >= 0 ? 'rgba(9, 171, 59, 0.1)' : 'rgba(255, 75, 75, 0.1)', 'color': resultadoCarteiraIA.variacao_pct >= 0 ? '#09ab3b' : '#ff4b4b', 'border': resultadoCarteiraIA.variacao_pct >= 0 ? '1px solid #09ab3b' : '1px solid #ff4b4b'}">
-          {{ resultadoCarteiraIA.variacao_pct > 0 ? '▲' : '▼' }} {{ resultadoCarteiraIA.variacao_pct > 0 ? '+' : '' }}{{ resultadoCarteiraIA.variacao_pct | number:'1.2-2' }}%
+      <h2 *ngIf="!carregandoTabela" style="font-weight: 400; font-size: 1.5rem; margin-bottom: 20px;">Destaques da Carteira</h2>
+      <div *ngIf="!carregandoTabela" style="display: flex; gap: 20px; margin-bottom: 40px; flex-wrap: wrap;">
+        <div *ngFor="let destaque of ativos | slice:0:3" style="flex: 1; min-width: 250px; background-color: #262730; padding: 25px; border-radius: 8px;">
+          <p style="color: #9e9e9e; margin: 0 0 5px 0; font-size: 1.1rem;">{{ destaque.fundo }}</p>
+          <h3 style="margin: 0; font-size: 2.5rem; font-weight: 600;">R$ {{ destaque.precoAtual | number:'1.2-2' }}</h3>
+          <p style="margin: 10px 0 0 0; font-weight: 600; font-size: 1.2rem;" [style.color]="destaque.variacao >= 0 ? '#09ab3b' : '#ff4b4b'">
+            {{ destaque.variacao > 0 ? '▲' : '▼' }} {{ destaque.variacao > 0 ? '+' : '' }}{{ destaque.variacao | number:'1.2-2' }}%
+          </p>
         </div>
       </div>
-      
-    </div>
-  </div>
 
-</div>
+      <h2 *ngIf="!carregandoTabela" style="font-weight: 400; font-size: 1.5rem; margin-bottom: 20px;">Posição Completa</h2>
+      <div style="background-color: #262730; border-radius: 8px; overflow: hidden; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+        <table *ngIf="!carregandoTabela" style="width: 100%; text-align: left; border-collapse: collapse;">
+          <thead>
+            <tr style="border-bottom: 2px solid #4CAF50; background-color: #1e1e24;">
+              <th style="padding: 15px; color: #fafafa;">Ativo</th>
+              <th style="padding: 15px; color: #fafafa;">Preço Atual</th>
+              <th style="padding: 15px; color: #fafafa;">Preço Médio</th>
+              <th style="padding: 15px; color: #fafafa;">Qtd</th>
+              <th style="padding: 15px; color: #fafafa;">Lucro / Prejuízo</th>
+              <th style="padding: 15px; color: #fafafa;">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let ativo of ativos" style="border-bottom: 1px solid #333; background-color: #262730;">
+              <td style="padding: 15px; font-weight: 600; color: #fafafa;">{{ ativo.fundo }} <span style="display: block; font-size: 0.8rem; color: #9e9e9e; font-weight: normal;">{{ ativo.status }}</span></td>
+              <td style="padding: 15px; color: #fafafa; font-weight: bold;">R$ {{ ativo.precoAtual | number:'1.2-2' }}</td>
+              <td style="padding: 15px; color: #fafafa;">
+                <span *ngIf="!ativo.editando">R$ {{ ativo.precoMedio | number:'1.2-2' }}</span>
+                <input *ngIf="ativo.editando" type="number" [(ngModel)]="ativo.precoMedio" style="width: 80px; padding: 6px; background: #0e1117; color: white; border: 1px solid #9c27b0; border-radius: 4px;">
+              </td>
+              <td style="padding: 15px; color: #fafafa;">
+                <span *ngIf="!ativo.editando">{{ ativo.quantidade }}</span>
+                <input *ngIf="ativo.editando" type="number" [(ngModel)]="ativo.quantidade" style="width: 80px; padding: 6px; background: #0e1117; color: white; border: 1px solid #9c27b0; border-radius: 4px;">
+              </td>
+              <td style="padding: 15px; font-weight: bold;" [style.color]="(ativo.precoAtual - ativo.precoMedio) >= 0 ? '#09ab3b' : '#ff4b4b'">
+                R$ {{ ((ativo.precoAtual - ativo.precoMedio) * ativo.quantidade) | number:'1.2-2' }}
+              </td>
+              <td style="padding: 15px;">
+                <button *ngIf="!ativo.editando" (click)="ativo.editando = true" style="background: transparent; color: #9c27b0; border: 1px solid #9c27b0; padding: 6px 12px; cursor: pointer; border-radius: 4px; transition: 0.3s;">Editar</button>
+                <button *ngIf="ativo.editando" (click)="salvarEdicao(ativo)" style="background: #9c27b0; color: white; border: none; padding: 7px 12px; cursor: pointer; border-radius: 4px;">Guardar</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <button (click)="buscarCotacoes()" style="margin-bottom: 40px; padding: 12px 24px; background-color: #4CAF50; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 1rem;">
+        Atualizar Mercado
+      </button>
+
+      <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-bottom: 40px;">
+        <div style="flex: 1; min-width: 350px; background-color: #1a1a24; padding: 30px; border-radius: 8px; border-top: 5px solid #00acc1;">
+          <h2 style="margin-top: 0; color: #b2ebf2; font-weight: 400;">⚖️ Motor de Aportes</h2>
+          <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+            <input type="number" [(ngModel)]="valorAporte" placeholder="R$ 1000" style="padding: 12px 15px; border-radius: 4px; border: 1px solid #333; background-color: #0e1117; color: white; width: 100%; max-width: 200px; font-size: 1rem;">
+            <button (click)="calcularRebalanceamento()" style="padding: 12px 25px; background-color: #00acc1; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Gerar Lista</button>
+          </div>
+          <div *ngIf="carregandoRebalanceamento" style="color: #b2ebf2; font-weight: bold;">⚙️ A processar algoritmo...</div>
+          <div *ngIf="comprasRebalanceamento.length > 0" style="margin-top: 25px;">
+            <ul style="list-style-type: none; padding: 0; margin-bottom: 20px;">
+              <li *ngFor="let item of comprasRebalanceamento" style="background-color: #262730; padding: 15px; margin-bottom: 10px; border-radius: 4px; border-left: 3px solid #00acc1;">
+                <strong style="color: #fafafa; font-size: 1.1rem;">Comprar {{ item.quantidade }} cotas de {{ item.fundo }}</strong><br>
+                <span style="color: #aaa; font-size: 0.9rem;">Custo: R$ {{ item.total | number:'1.2-2' }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div style="flex: 1; min-width: 350px; background-color: #1a1a24; padding: 30px; border-radius: 8px; border-top: 5px solid #9c27b0;">
+          <h2 style="margin-top: 0; color: #e1bee7; font-weight: 400;">🔮 Oráculo Individual (ML)</h2>
+          <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+            <input type="text" [(ngModel)]="tickerIA" placeholder="Ex: VGIR11" style="padding: 12px 15px; border-radius: 4px; border: 1px solid #333; background-color: #0e1117; color: white; width: 100%; max-width: 200px; text-transform: uppercase;">
+            <button (click)="rodarInteligenciaArtificial()" style="padding: 12px 25px; background-color: #9c27b0; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Processar</button>
+          </div>
+          <div *ngIf="carregandoIA" style="color: #e1bee7; font-weight: bold;">🧠 A treinar rede neural...</div>
+          <div *ngIf="resultadoIA" style="background-color: #262730; padding: 25px; border-radius: 4px; border: 1px solid #4a4a5a; margin-top: 25px;">
+            <h3 style="color: #09ab3b; margin-top: 0;">{{ resultadoIA.ticker }}</h3>
+            <p style="font-size: 2rem; font-weight: bold; color: #09ab3b; margin: 0;">R$ {{ resultadoIA.previsao | number:'1.4-4' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div style="background-color: #1a1a24; padding: 30px; border-radius: 8px; border-top: 5px solid #ff9800; margin-bottom: 50px;">
+        <h2 style="margin-top: 0; color: #ffe0b2; font-weight: 400;">💰 Projeção Global de Renda</h2>
+        <button (click)="preverRendaCarteira()" style="padding: 12px 25px; background-color: #ff9800; color: #1e1e24; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 1.1rem; margin-bottom: 20px;">
+          Calcular Renda Futura
+        </button>
+        <div *ngIf="carregandoCarteiraIA" style="color: #ffb74d; font-weight: bold; font-size: 1.1rem;">⏳ Machine Learning em andamento...</div>
+        <div *ngIf="resultadoCarteiraIA" style="background-color: #262730; padding: 30px; border-radius: 8px; border: 1px solid #4a4a5a; margin-top: 20px; display: flex; gap: 40px; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 200px;">
+            <p style="color: #9e9e9e; margin-bottom: 5px; font-size: 1rem; text-transform: uppercase;">Último Mês Recebido</p>
+            <p style="font-size: 2.5rem; font-weight: 600; color: #fafafa; margin: 0;">R$ {{ resultadoCarteiraIA.total_passado | number:'1.2-2' }}</p>
+          </div>
+          <div style="flex: 1; min-width: 200px;">
+            <p style="color: #9e9e9e; margin-bottom: 5px; font-size: 1rem; text-transform: uppercase;">Previsão Mês que Vem</p>
+            <p style="font-size: 2.5rem; font-weight: bold; margin: 0;" [style.color]="resultadoCarteiraIA.variacao_pct >= 0 ? '#09ab3b' : '#ff4b4b'">
+              R$ {{ resultadoCarteiraIA.total_previsto | number:'1.2-2' }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+    </div> </div> </div>
