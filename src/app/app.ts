@@ -14,16 +14,22 @@ export class App implements OnInit {
   ativos: any[] = [];
   carregandoTabela = true;
   
+  // Rebalanceamento
+  valorAporte: number = 0;
+  comprasRebalanceamento: any[] = [];
+  sobraRebalanceamento: number = 0;
+  carregandoRebalanceamento = false;
+
+  // IA Preditiva (Ativo Individual)
   tickerIA: string = '';
   resultadoIA: any = null;
   carregandoIA = false;
   erroIA: string = '';
 
-  // Novas variáveis do Rebalanceamento
-  valorAporte: number = 0;
-  comprasRebalanceamento: any[] = [];
-  sobraRebalanceamento: number = 0;
-  carregandoRebalanceamento = false;
+  // IA Preditiva (Carteira Completa)
+  resultadoCarteiraIA: any = null;
+  carregandoCarteiraIA = false;
+  erroCarteiraIA: string = '';
 
   private http = inject(HttpClient);
   private cdr = inject(ChangeDetectorRef); 
@@ -49,11 +55,7 @@ export class App implements OnInit {
   }
 
   salvarEdicao(ativo: any) {
-    const payload = {
-      quantidade: ativo.quantidade,
-      preco_medio: ativo.precoMedio
-    };
-    
+    const payload = { quantidade: ativo.quantidade, preco_medio: ativo.precoMedio };
     this.http.put(`http://localhost:8000/api/ativos/${ativo.fundo}`, payload).subscribe({
       next: () => {
         ativo.editando = false; 
@@ -77,7 +79,6 @@ export class App implements OnInit {
         this.cdr.detectChanges();
       },
       error: (erro) => {
-        console.error('Erro no cálculo:', erro);
         this.carregandoRebalanceamento = false;
         this.cdr.detectChanges();
       }
@@ -95,17 +96,36 @@ export class App implements OnInit {
 
     this.http.get<any>(`http://localhost:8000/api/previsao/${tickerLimpo}`).subscribe({
       next: (resposta) => {
-        if (resposta.sucesso) {
-          this.resultadoIA = resposta;
-        } else {
-          this.erroIA = resposta.erro || 'Erro ao processar modelo.';
-        }
+        if (resposta.sucesso) { this.resultadoIA = resposta; } 
+        else { this.erroIA = resposta.erro || 'Erro ao processar modelo.'; }
         this.carregandoIA = false;
         this.cdr.detectChanges(); 
       },
       error: (erro) => {
         this.erroIA = `Falha HTTP. Verifique o terminal do Python.`;
         this.carregandoIA = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  // NOVA FUNÇÃO: Aciona a IA para toda a carteira
+  preverRendaCarteira() {
+    this.carregandoCarteiraIA = true;
+    this.resultadoCarteiraIA = null;
+    this.erroCarteiraIA = '';
+    this.cdr.detectChanges();
+
+    this.http.get<any>('http://localhost:8000/api/previsao_carteira').subscribe({
+      next: (resposta) => {
+        if (resposta.sucesso) { this.resultadoCarteiraIA = resposta; } 
+        else { this.erroCarteiraIA = resposta.erro || 'Erro ao prever a carteira.'; }
+        this.carregandoCarteiraIA = false;
+        this.cdr.detectChanges();
+      },
+      error: (erro) => {
+        this.erroCarteiraIA = 'Falha ao conectar com o motor de Machine Learning.';
+        this.carregandoCarteiraIA = false;
         this.cdr.detectChanges();
       }
     });
